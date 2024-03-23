@@ -1,7 +1,8 @@
 from fastapi import FastAPI, HTTPException
-from pydantic import BaseModel
+from pydantic import BaseModel, validator, Field
 from typing import List
 import sqlite3
+from datetime import datetime
 
 app = FastAPI()
 
@@ -9,11 +10,19 @@ app = FastAPI()
 # Модель пользователя
 class User(BaseModel):
     id: int
-    first_name: str
-    last_name: str
+    first_name: str = Field(..., min_length=2)
+    last_name: str = Field(..., min_length=2)
     birth_date: str
-    email: str
+    email: str = Field(..., min_length=5)
     address: str
+
+    @validator('birth_date')
+    def validate_birth_date(cls, birth_date):
+        try:
+            datetime.strptime(birth_date, "%Y-%m-%d")
+            return birth_date
+        except ValueError:
+            raise ValueError("Invalid birth date. Format should be 'YYYY-MM-DD'")
 
 
 # Создание таблицы пользователей в базе данных
